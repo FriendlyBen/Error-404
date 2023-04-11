@@ -60,13 +60,34 @@ const columns = [
 const StickyHeadTable = ({ search }) => {
   const [load, setLoad] = useState(20);
   const [open, setOpen] = useState(false);
+  const [width, setWidth] = useState(window.innerWidth);
   const [coinId, setCoinId] = useState("");
+
+  let sliceValue = 0;
 
   useEffect(() => {
     if (apiStore.coin_list.length > 0 && authStore.user) {
       fireStore.fetchFavouriteList();
     }
   }, [fireStore.favourite_list]);
+
+  const handleResize = () => {
+    setWidth(window.innerWidth);
+  };
+
+  useEffect(() => {
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  if (width <= 768) {
+    sliceValue = 1;
+  } else if (width > 768 && width <= 1223) {
+    sliceValue = 2;
+  } else {
+    sliceValue = 4;
+  }
 
   const loading = () => {
     if (load < 100) {
@@ -120,7 +141,7 @@ const StickyHeadTable = ({ search }) => {
               {apiStore.coin_list.length > 0 &&
                 apiStore.coin_list
                   .filter((coin) => coin.name.toLowerCase().includes(search))
-                  .slice(4, load)
+                  .slice(sliceValue, load)
                   .map((coin, key) => {
                     return (
                       <TableRow

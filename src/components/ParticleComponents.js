@@ -1,4 +1,5 @@
 
+import { Bounce } from "react-toastify";
 import Particles from "react-tsparticles";
 import {loadBigCirclesPreset} from 'tsparticles-preset-big-circles';
 
@@ -30,7 +31,26 @@ const ParticleComponent = () => {
         style={{ position: "absolute", top: 0 }}
         // params={particlesConfig}
         options={{
-            preset: 'bigCircles'
+            preset: 'bigCircles',
+            bounce:false,
+            motion:{
+                enable: true,
+                speed: 0.1,
+            },
+            particles:{
+                color:{
+                    value:["#325358","#C0FFEE","#31CCEC","#6A1A78"],
+                },
+                size:{
+                    value:300,
+                },
+                sizeRandomness:{
+                    value: 0.4,
+                },
+                bounce:{
+                    value: false,
+                }
+            }
         }}
         init={loadBigCirclesPreset}
       />
