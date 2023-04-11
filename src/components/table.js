@@ -9,15 +9,13 @@ import TableRow from "@mui/material/TableRow";
 import Modal from "./details-modal.tsx";
 import "./details-modal.tsx";
 import { apiStore, authStore, fireStore } from "../store";
+import StarRateRoundedIcon from "@mui/icons-material/StarRateRounded";
+import StarBorderRoundedIcon from "@mui/icons-material/StarBorderRounded";
 import "../styles/pages/home.scss";
 import { observer } from "mobx-react-lite";
 import Button from "@mui/material/Button";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-import { TransitionGroup } from "react-transition-group";
-import { Stack } from "@mui/material";
-import ToggleButton from "@mui/material/ToggleButton";
-import StarRoundedIcon from "@mui/icons-material/StarRounded";
 
 const columns = [
   { id: "favorite", label: "", width: 2, align: "left" },
@@ -59,7 +57,7 @@ const columns = [
   },
 ];
 
-const StickyHeadTable = ({ search, slice }) => {
+const StickyHeadTable = ({ search }) => {
   const [load, setLoad] = useState(20);
   const [open, setOpen] = useState(false);
   const [width, setWidth] = useState(window.innerWidth);
@@ -68,10 +66,10 @@ const StickyHeadTable = ({ search, slice }) => {
   let sliceValue = 0;
 
   useEffect(() => {
-    if (authStore.user) {
+    if (apiStore.coin_list.length > 0 && authStore.user) {
       fireStore.fetchFavouriteList();
     }
-  }, [authStore.user]);
+  }, [fireStore.favourite_list]);
 
   const handleResize = () => {
     setWidth(window.innerWidth);
@@ -114,148 +112,138 @@ const StickyHeadTable = ({ search, slice }) => {
 
   return (
     <>
-      <Paper sx={{ width: "100%", margin: "0 0 30px 0" }}>
+      <Paper sx={{ width: "100%" }}>
         <TableContainer className="table" sx={{ overflow: "auto" }}>
-          <TransitionGroup>
-            <Table
-              stickyHeader
-              aria-label="sticky table"
-              sx={{ fontFamily: "Poppins, sans-serif" }}
-            >
-              <TableHead>
-                <TableRow>
-                  {columns.map((column) => (
-                    <TableCell
-                      key={column.id}
-                      align={column.align}
-                      style={{
-                        width: column.width,
-                        position: "sticky",
-                        top: "0",
-                        zIndex: 1,
-                      }}
-                    >
-                      {column.label}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody className="tablebody">
-                {apiStore.coin_list.length > 0 &&
-                  apiStore.coin_list
-                    .filter((coin) => coin.name.toLowerCase().includes(search))
-                    .slice(slice, load)
-                    .map((coin, key) => {
-                      return (
-                        <TableRow
-                          hover
-                          role="checkbox"
-                          tabIndex={-1}
-                          key={key}
-                          onClick={() => openModal(coin.id)}
-                        >
-                          <TableCell>
-                            <ToggleButton
-                              value="check"
-                              selected={
-                                fireStore.favourite_list &&
-                                fireStore.favourite_list.includes(coin.id)
-                              }
-                              onChange={(event) => {
-                                favorite(event, coin.id);
-                              }}
-                              color="warning"
-                              sx={{ borderRadius: "50%" }}
-                              size="small"
-                            >
-                              <StarRoundedIcon />
-                            </ToggleButton>
-                          </TableCell>
+          <Table
+            stickyHeader
+            aria-label="sticky table"
+            sx={{ fontFamily: "Poppins, sans-serif" }}
+          >
+            <TableHead>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableCell
+                    key={column.id}
+                    align={column.align}
+                    style={{
+                      width: column.width,
+                      position: "sticky",
+                      top: "0",
+                      zIndex: 1,
+                    }}
+                  >
+                    {column.label}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody className="tablebody">
+              {apiStore.coin_list.length > 0 &&
+                apiStore.coin_list
+                  .filter((coin) => coin.name.toLowerCase().includes(search))
+                  .slice(sliceValue, load)
+                  .map((coin, key) => {
+                    return (
+                      <TableRow
+                        hover
+                        role="checkbox"
+                        tabIndex={-1}
+                        key={key}
+                        onClick={() => openModal(coin.id)}
+                      >
+                        <TableCell>
+                          {fireStore.favourite_list &&
+                          fireStore.favourite_list.includes(coin.id) ? (
+                            <StarRateRoundedIcon
+                              className="star"
+                              onClick={(event) => favorite(event, coin.id)}
+                            />
+                          ) : (
+                            <StarBorderRoundedIcon
+                              onClick={(event) => favorite(event, coin.id)}
+                            />
+                          )}
+                        </TableCell>
 
-                          <TableCell>{coin.market_cap_rank}</TableCell>
-                          <TableCell>
-                            <div className="cell">
-                              <div>
-                                <img className="cell-images" src={coin.image} />
-                              </div>
-                              <div className="d-flex cell-text">
-                                {coin.name} <p>{coin.symbol}</p>
-                              </div>
+                        <TableCell>{coin.market_cap_rank}</TableCell>
+                        <TableCell>
+                          <div className="cell">
+                            <div>
+                              <img className="cell-images" src={coin.image} />
                             </div>
-                          </TableCell>
-                          <TableCell>{coin.current_price}</TableCell>
-                          <TableCell>
-                            <div
-                              className={`my-number ${
-                                coin.price_change_percentage_24h < 0
-                                  ? "negative"
-                                  : ""
-                              }`}
-                            >
-                              {coin.price_change_percentage_24h.toFixed(2) +
-                                "%"}
+                            <div className="d-flex cell-text">
+                              {coin.name}  <p>{coin.symbol}</p>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div
-                              className={`my-number ${
-                                coin.market_cap_change_percentage_24h < 0
-                                  ? "negative"
-                                  : ""
-                              }`}
-                            >
-                              {coin.market_cap_change_percentage_24h.toFixed(
-                                2
-                              ) + "%"}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div
-                              className={`my-number ${
-                                coin.ath_change_percentage < 0 ? "negative" : ""
-                              }`}
-                            >
-                              {coin.ath_change_percentage.toFixed(2) + "%"}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div
-                              className={`my-number ${
-                                coin.atl_change_percentage < 0 ? "negative" : ""
-                              }`}
-                            >
-                              {coin.atl_change_percentage.toFixed(2) + "%"}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-              </TableBody>
-            </Table>
-          </TransitionGroup>
+                          </div>
+                        </TableCell>
+                        <TableCell>{coin.current_price}</TableCell>
+                        <TableCell>
+                          <div
+                            className={`my-number ${
+                              coin.price_change_percentage_24h < 0
+                                ? "negative"
+                                : ""
+                            }`}
+                          >
+                            {coin.price_change_percentage_24h.toFixed(2) + "%"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div
+                            className={`my-number ${
+                              coin.market_cap_change_percentage_24h < 0
+                                ? "negative"
+                                : ""
+                            }`}
+                          >
+                            {coin.market_cap_change_percentage_24h.toFixed(2) +
+                              "%"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div
+                            className={`my-number ${
+                              coin.ath_change_percentage < 0 ? "negative" : ""
+                            }`}
+                          >
+                            {coin.ath_change_percentage.toFixed(2) + "%"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div
+                            className={`my-number ${
+                              coin.atl_change_percentage < 0 ? "negative" : ""
+                            }`}
+                          >
+                            {coin.atl_change_percentage.toFixed(2) + "%"}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+            </TableBody>
+          </Table>
         </TableContainer>
       </Paper>
       {load <
         apiStore.coin_list.filter((coin) =>
           coin.name.toLowerCase().includes(search)
         ).length && (
-        <Stack alignItems="center">
-          <Button
-            variant="contained"
-            sx={{
-              fontFamily: "Poppins, sans-serif",
-              backgroundColor: "black",
-              margin: 2,
-              ":hover": {
-                backgroundColor: "#fc6",
-                color: "black",
-              },
-            }}
-            onClick={() => loading()}
-          >
-            Load More
-          </Button>
-        </Stack>
+        <Button
+          variant="contained"
+          sx={{
+            fontFamily: "Poppins, sans-serif",
+            backgroundColor: "black",
+            marginTop: 3,
+            ":hover": {
+              backgroundColor: "#fc6",
+              color: "black",
+            },
+          }}
+          onClick={() => loading()}
+        >
+          Load More
+        </Button>
       )}
 
       <Modal popup_index={coinId} open={open} setOpen={setOpen} />
