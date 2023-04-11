@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Home, Favourite, Login } from "./pages";
+import { Home, Favourite, Login, NotFound } from "./pages";
 import { Nav, Modal } from "./components";
 import { ToastContainer } from "react-toastify";
 import "./styles/main.scss";
@@ -9,6 +9,7 @@ import { observer } from "mobx-react-lite";
 import Testing from "./components/testing";
 import { createTheme } from "@mui/material/styles";
 import { ThemeProvider } from "@mui/material/styles";
+import ResponsiveAppBar from "./components/nav";
 
 const theme = createTheme({
   typography: {
@@ -25,16 +26,14 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-        {/* {authStore.user && <Nav />} */}
-
-        <Nav />
+        <ResponsiveAppBar />
 
         {/* <Auth> */}
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/favourite" element={<Favourite />} />
+          <Route path="/favorite" element={<Favourite />} />
           <Route path="/testing" element={<Testing />} />
-          {/* <Route path="/" element={<Login />} /> */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
         {/* </Auth> */}
         <ToastContainer theme="dark" />

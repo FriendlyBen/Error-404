@@ -1,38 +1,52 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { observer } from "mobx-react-lite";
 import "../styles/pages/home.scss";
-import { apiStore } from "../store";
+import { apiStore, fireStore } from "../store";
 import { Wrapper } from "../components";
 import { StickyHeadTable } from "../components";
 import TextField from "@mui/material/TextField";
+import Modal from "../components/details-modal.tsx";
+import "../components/details-modal.tsx";
+import Paper from "@mui/material/Paper";
+import { Grow } from "@mui/material";
 import ParticleComponent from "../components/ParticleComponents";
 
 const Home = () => {
   const [search, setSearch] = useState("");
-  const [width, setWidth] = useState(window.innerWidth);
-  let sliceValue = 4;
+  const [open, setOpen] = useState(false);
+  const [coinId, setCoinId] = useState("");
+  const [viewCard, setViewCard] = useState(4);
 
   useEffect(() => {
     apiStore.fetchList();
   }, []);
 
+  // sx: 0px
+  // sm: 600px
+  // md: 960px
+  // lg: 1280px
+  // xl: 1920px
+
   const handleResize = () => {
-    setWidth(window.innerWidth);
+    const width = window.innerWidth;
+    if (width <= 650) {
+      setViewCard(1);
+    } else if (width <= 960) {
+      setViewCard(2);
+    } else if (width <= 1300) {
+      setViewCard(3);
+    } else if (width >= 1400) {
+      setViewCard(4);
+    }
   };
 
   useEffect(() => {
     window.addEventListener("resize", handleResize);
-
+    handleResize(); // initial check
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  if (width <= 768) {
-    sliceValue = 1;
-  } else if (width > 768 && width <= 1223) {
-    sliceValue = 2;
-  } else {
-    sliceValue = 4;
-  }
+  // log(apiStore.coin_list);
 
   return (
     <>
@@ -47,51 +61,69 @@ const Home = () => {
                 flexWrap: "nowrap",
               }}
             >
-              {apiStore.coin_list.length > 0 ? (
+              {apiStore.coin_list && apiStore.coin_list.length > 0 ? (
                 apiStore.coin_list
                   .filter((coin) => coin.name.toLowerCase().includes(search))
-                  .slice(0, sliceValue)
+                  .slice(0, viewCard)
                   .map((coin, key) => {
                     return (
-                      <div className="d-flex best-coin" key={key}>
-                        <div className="best-coin-image">
-                          <img src={coin.image} />
-                        </div>
-                        <div className="best-coin-name">{coin.name}</div>
-                        <div className="d-flex best-coin-price">
-                          <p>Current Price:</p>
-                          <p>RM {coin.current_price}</p>
-                        </div>
-                        <div className="best-coin-24HL">
-                          <div className="d-flex best-coin-24HL-high">
-                            <div>
-                              <b>ATH (Today)</b>
+                      <Grow
+                        in={coin}
+                        style={{ transformOrigin: "0 0 0" }}
+                        {...(coin ? { timeout: key * 1000 } : {})}
+                      >
+                        <Paper sx={{ width: "100%" }}>
+                          <div
+                            className="d-flex best-coin"
+                            key={key}
+                            onClick={() => {
+                              setOpen(true);
+                              setCoinId(coin.id);
+                              apiStore.clearDetails();
+                            }}
+                          >
+                            <div className="best-coin-image">
+                              <img src={coin.image} />
                             </div>
-                            <h2>{coin.high_24h}</h2>
-                          </div>
-                          <div className="d-flex best-coin-24HL-low">
-                            <div>
-                              <b>ATL (Today)</b>
+                            <div className="best-coin-name">{coin.name}</div>
+                            <div className="d-flex best-coin-price">
+                              <p>Current Price:</p>
+                              <p>RM {coin.current_price}</p>
                             </div>
-                            <h2>{coin.low_24h}</h2>
+                            <div className="best-coin-24HL">
+                              <div className="d-flex best-coin-24HL-high">
+                                <div>
+                                  <b>ATH (Today)</b>
+                                </div>
+                                <h2>{coin.high_24h}</h2>
+                              </div>
+                              <div className="d-flex best-coin-24HL-low">
+                                <div>
+                                  <b>ATL (Today)</b>
+                                </div>
+                                <h2>{coin.low_24h}</h2>
+                              </div>
+                            </div>
+                            <div className="d-flex best-coin-mc">
+                              <div className="best-coin-mc-title">
+                                <b>Total Market Cap</b>
+                              </div>
+                              <div>
+                                <strong>RM</strong>
+                                {coin.market_cap}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="d-flex best-coin-mc">
-                          <div className="best-coin-mc-title">
-                            <b>Total Market Cap</b>
-                          </div>
-                          <div>
-                            <strong>RM</strong>
-                            {coin.market_cap}
-                          </div>
-                        </div>
-                      </div>
+                        </Paper>
+                      </Grow>
                     );
                   })
               ) : (
                 <div>Loading</div>
               )}
             </div>
+          </div>
+          <div>
             <div className="crypto-search">
               <TextField
                 className="crypto-search-field"
@@ -101,10 +133,11 @@ const Home = () => {
                 onChange={(e) => setSearch(e.target.value.toLocaleLowerCase())}
               />
             </div>
-            <StickyHeadTable search={search} />
           </div>
+          <StickyHeadTable search={search} slice={viewCard} />
         </Wrapper>
       </div>
+      <Modal popup_index={coinId} open={open} setOpen={setOpen} />
     </>
   );
 };

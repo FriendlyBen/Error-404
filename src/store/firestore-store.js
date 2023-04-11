@@ -24,13 +24,22 @@ export class firestoreStoreImplementation {
     this.favourite_list = props;
   }
 
+  setFavouriteData(props) {
+    this.favourite_data = props;
+  }
+
   postFavouriteAPI(props) {
-    let tmp_favorite_list = [...this.favourite_list];
+    let tmp_favorite_list;
+    if(this.favourite_list === 0) {
+      tmp_favorite_list = this.favourite_list;
+    }else {
+      tmp_favorite_list = [...this.favourite_list];
+    }
+    const id = toast.loading("Please wait...");
 
     if (props) {
       if (tmp_favorite_list.includes(props)) {
         tmp_favorite_list.splice(tmp_favorite_list.indexOf(props), 1);
-        console.log(tmp_favorite_list);
       } else {
         tmp_favorite_list.push(props);
       }
@@ -42,40 +51,65 @@ export class firestoreStoreImplementation {
         .get()
         .then((doc) => {
           if (doc.exists) {
-            console.log("Document exists!");
             docRef
               .update({
                 favourite_list: tmp_favorite_list,
               })
               .then(() => {
-                console.log("Document updated successfully!");
+                this.setFavouriteList(tmp_favorite_list);
+                toast.update(id, {
+                  render: "Favorite Updated",
+                  type: "success",
+                  isLoading: false,
+                  autoClose: 5000,
+                });
               })
               .catch((error) => {
-                console.log("Error updating document:", error);
-                toast.error(error);
+                toast.update(id, {
+                  render: error.message,
+                  type: "error",
+                  isLoading: false,
+                  autoClose: 5000,
+                });
               });
           } else {
-            console.log("Document does not exist!");
             docRef
               .set({
                 favourite_list: tmp_favorite_list,
               })
               .then(() => {
-                console.log("Document created successfully!");
+                this.setFavouriteList(tmp_favorite_list);
+                toast.update(id, {
+                  render: "Favorite Updated",
+                  type: "success",
+                  isLoading: false,
+                  autoClose: 5000,
+                });
               })
               .catch((error) => {
-                console.log("Error creating document:", error);
                 toast.error(error.message);
               });
           }
         })
         .catch((error) => {
-          console.log("Error getting document:", error);
+          toast.update(id, {
+            render: error.message,
+            type: "error",
+            isLoading: false,
+            autoClose: 5000,
+          });
         });
+    } else {
+      toast.update(id, {
+        render: "No coin id provided!",
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
     }
   }
 
-  fetchFavouriteList() {
+  async fetchFavouriteList() {
     const email = authStore.user;
     const docRef = db.collection("user_data").doc(email);
     docRef
@@ -83,6 +117,7 @@ export class firestoreStoreImplementation {
       .then((doc) => {
         if (doc.exists) {
           this.setFavouriteList(doc.data().favourite_list);
+          this.getFavouriteList();
         } else {
           console.log("No such document!");
         }
@@ -98,8 +133,7 @@ export class firestoreStoreImplementation {
       .map((item) => ({
         ...item,
       }));
-    console.log(newArray);
-    this.favourite_data = newArray;
+    this.setFavouriteData(newArray);
   }
 }
 
